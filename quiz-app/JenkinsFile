@@ -11,7 +11,7 @@ pipeline {
 
     stage('Clone Repository') {
       steps {
-        git 'https://github.com/kavya2352/devops_lab.git'
+        git branch: 'main', url: 'https://github.com/kavya2352/devops_lab.git'
       }
     }
 
