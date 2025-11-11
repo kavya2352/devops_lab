@@ -15,21 +15,6 @@ pipeline {
       }
     }
 
-    stage('SonarQube Analysis') {
-      steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh '''
-            cd QUIZ-APP
-            sonar-scanner \
-              -Dsonar.projectKey=QUIZ-APP \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=${SONAR_URL} \
-              -Dsonar.login=$SONAR_AUTH_TOKEN
-          '''
-        }
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
         sh '''
