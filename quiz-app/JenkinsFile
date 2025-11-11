@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'kavyak2305'
-        DOCKERHUB_EMAIL = 'kavyakuthala2305@gmail.com'
+        DOCKERHUB_USER = 'kavya2352'
+        DOCKERHUB_EMAIL = 'kavyakuthala27@gmail.com'
         IMAGE_NAME = 'quiz-app'
     }
 
