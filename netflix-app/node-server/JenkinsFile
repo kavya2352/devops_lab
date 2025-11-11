@@ -1,0 +1,92 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKERHUB_USER = 'kavyak2305'
+    DOCKERHUB_EMAIL = 'kavyakuthala2305@gmail.com'
+    SONAR_URL = "http://<your-sonarqube-ip>:9000"
+
+  }
+
+  stages {
+
+    stage('Clone Repository') {
+      steps {
+        git 'https://github.com/kavya2352/devops_app.git'
+      }
+    }
+
+    stage('Node Module Install') {
+      steps {
+        dir('node-server') {
+          sh 'npm install'
+        }
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+          sh '''
+            cd node-server
+            sonar-scanner \
+              -Dsonar.projectKey=node-server \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=${SONAR_URL} \
+              -Dsonar.login=$SONAR_AUTH_TOKEN
+          '''
+        }
+      }
+    }
+
+    stage('Build Docker Images') {
+      steps {
+        sh 'docker build -t ${DOCKERHUB_USER}/node-image:latest ./node-server'
+      }
+    }
+
+    stage('Push to DockerHub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+          sh 'echo $PASS | docker login -u $USER --password-stdin'
+        }
+        sh 'docker push ${DOCKERHUB_USER}/node-image:latest'
+      }
+    }
+
+    stage('Deploy with Docker Compose') {
+      steps {
+        echo 'Deploying containers using docker-compose...'
+        sh 'docker-compose down || true'
+        sh 'docker-compose up -d'
+      }
+    }
+
+    stage('Update Deployment File') {
+        environment {
+            GIT_REPO_NAME = "Devops_lab
+            GIT_USER_NAME = "kavya2352"
+        }
+        steps {
+            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                sh '''
+                    git config user.email "kavyakuthala27@gmail.com"
+                    git config user.name "kavya2352"
+                    BUILD_NUMBER=${BUILD_NUMBER}
+                    sed -i "s/v1/${BUILD_NUMBER}/g" netflix-app/kubernetes/deployment.yml
+                    git add netflix-app/kubernetes/deployment.yml
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                '''
+            }
+        }
+    }
+
+    stage('Deploy to Kubernetes') {
+      steps {
+        sh 'kubectl apply -f kubernetes/deployment.yml'
+        sh 'kubectl apply -f kubernetes/service.yml'
+      }
+    }
+  }
+}
