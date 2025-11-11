@@ -35,25 +35,6 @@ pipeline {
       }
     }
 
-    stage('Update Deployment File') {
-      environment {
-        GIT_REPO_NAME = "devops_app"
-        GIT_USER_NAME = "kavya2352"
-      }
-      steps {
-        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-          sh '''
-            git config user.email "kavyakuthala27@gmail.com"
-            git config user.name "kavya2352"
-            sed -i "s|image:.*|image: ${DOCKERHUB_USER}/${IMAGE_NAME}:${BUILD_NUMBER}|g" QUIZ-APP/kubernetes/deployment.yml
-            git add QUIZ-APP/kubernetes/deployment.yml
-            git commit -m "Update image to version ${BUILD_NUMBER}"
-            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-          '''
-        }
-      }
-    }
-
     stage('Deploy to Kubernetes') {
       steps {
         sh '''
