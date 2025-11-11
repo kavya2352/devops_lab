@@ -19,7 +19,7 @@ pipeline {
       steps {
         sh '''
           cd quiz-app
-          sudo docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
+          docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
         '''
       }
     }
