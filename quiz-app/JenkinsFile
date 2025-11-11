@@ -1,47 +1,55 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB_USER = 'kavyak2305'
-    DOCKERHUB_EMAIL = 'kavyakuthala2305@gmail.com'
-    IMAGE_NAME = 'quiz-app'
-  }
-
-  stages {
-
-    stage('Clone Repository') {
-      steps {
-        git branch: 'main', url: 'https://github.com/kavya2352/devops_lab.git'
-      }
+    environment {
+        DOCKERHUB_USER = 'kavyak2305'
+        DOCKERHUB_EMAIL = 'kavyakuthala2305@gmail.com'
+        IMAGE_NAME = 'quiz-app'
     }
 
-    stage('Build Docker Image') {
-      steps {
-        sh '''
-          cd quiz-app
-          docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
-        '''
-      }
-    }
+    stages {
 
-    stage('Push to DockerHub') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-          sh '''
-            echo $PASS | docker login -u $USER --password-stdin
-            docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
-          '''
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/kavya2352/devops_lab.git'
+            }
         }
-      }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest ./quiz-app
+                '''
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                        echo $PASS | docker login -u $USER --password-stdin
+                        docker push ${DOCKERHUB_USER}/${IMAGE_NAME}:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''
+                    kubectl apply -f ./quiz-app/kubernetes/deployment.yml
+                    kubectl apply -f ./quiz-app/kubernetes/service.yml
+                '''
+            }
+        }
     }
 
-    stage('Deploy to Kubernetes') {
-      steps {
-        sh '''
-          kubectl apply -f quiz-app/kubernetes/deployment.yml
-          kubectl apply -f quiz-app/kubernetes/service.yml
-        '''
-      }
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Check logs for details."
+        }
     }
-  }
 }
