@@ -18,7 +18,7 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         sh '''
-          cd QUIZ-APP
+          cd quiz-app
           docker build -t ${DOCKERHUB_USER}/${IMAGE_NAME}:latest .
         '''
       }
@@ -38,8 +38,8 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         sh '''
-          kubectl apply -f QUIZ-APP/kubernetes/deployment.yml
-          kubectl apply -f QUIZ-APP/kubernetes/service.yml
+          kubectl apply -f quiz-app/kubernetes/deployment.yml
+          kubectl apply -f quiz-app/kubernetes/service.yml
         '''
       }
     }
